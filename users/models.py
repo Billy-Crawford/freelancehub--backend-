@@ -41,6 +41,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.email} ({self.role})"
 
+    @property
+    def is_freelance(self):
+        return self.role == 'freelance'
+
+    @property
+    def is_client(self):
+        return self.role == 'client'
+
 class FreelanceProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='freelance_profile')
     bio = models.TextField(blank=True)

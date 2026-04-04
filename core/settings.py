@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'missions',
+    'notifications'
 ]
 
 MIDDLEWARE = [

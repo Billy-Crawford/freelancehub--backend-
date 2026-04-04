@@ -29,3 +29,24 @@ class Mission(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class MissionApplication(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    ]
+
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name="applications")
+    freelancer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="applications")
+    cover_letter = models.TextField(blank=True)  # optionnel
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("mission", "freelancer")  # un freelance ne peut postuler qu'une fois par mission
+
+    def __str__(self):
+        return f"{self.freelancer.email} → {self.mission.title} [{self.status}]"
+
