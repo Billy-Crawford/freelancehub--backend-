@@ -25,8 +25,18 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'missions',
-    'notifications'
+    'notifications',
+    'channels',
+    'chat',
 ]
+
+ASGI_APPLICATION = 'core.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
