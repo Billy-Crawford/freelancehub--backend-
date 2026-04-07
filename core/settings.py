@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'notifications',
     'channels',
     'chat',
+    'reviews',
+    'payments',
 ]
 
 ASGI_APPLICATION = 'core.asgi.application'

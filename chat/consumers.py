@@ -105,3 +105,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print("Erreur save_message:", e)
 
+
