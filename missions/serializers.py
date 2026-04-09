@@ -1,3 +1,4 @@
+# missions/serializers.py
 from rest_framework import serializers
 from .models import Mission, MissionApplication
 
@@ -10,9 +11,10 @@ class MissionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MissionApplicationSerializer(serializers.ModelSerializer):
+    freelancer_email = serializers.ReadOnlyField(source="freelancer.email")
+
     class Meta:
         model = MissionApplication
         fields = "__all__"
         read_only_fields = ("freelancer", "status", "created_at", "mission")
-
 

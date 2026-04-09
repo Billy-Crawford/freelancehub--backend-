@@ -1,6 +1,6 @@
 # missions/views.py
 from rest_framework import generics, permissions
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse
 
@@ -98,4 +98,21 @@ def mission_pdf_view(request, mission_id):
     mission = get_object_or_404(Mission, id=mission_id)
     pdf_buffer = generate_mission_pdf(mission)
     return FileResponse(pdf_buffer, as_attachment=True, filename=f"{mission.title}.pdf")
+
+
+# 🔹 Lister toutes les candidatures d'une mission pour le client
+class MissionApplicationsListView(generics.ListAPIView):
+    serializer_class = MissionApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        mission_id = self.kwargs.get("mission_id")
+        # Récupérer uniquement les candidatures pour une mission appartenant au client
+        queryset = MissionApplication.objects.filter(mission__id=mission_id)
+        if self.request.user.role != "client":
+            raise PermissionDenied("Seuls les clients peuvent voir les candidatures.")
+        if queryset.exists() and queryset.first().mission.client != self.request.user:
+            raise PermissionDenied("Vous n'êtes pas propriétaire de cette mission.")
+        return queryset
+
 
