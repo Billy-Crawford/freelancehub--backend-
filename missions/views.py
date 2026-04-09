@@ -84,12 +84,18 @@ class UpdateApplicationStatusView(generics.UpdateAPIView):
 
         application = serializer.save(status=status)
 
-        # 🔹 Notifier le freelance de l'acceptation ou du refus
+        # 🔹 Notifier le freelance
         Notification.objects.create(
             user=application.freelancer,
             type="application_status",
             content=f"Votre candidature pour '{application.mission.title}' a été {application.status}."
         )
+
+        # 🔹 Si accepté, fermer la mission
+        if status == "accepted":
+            mission = application.mission
+            mission.status = "closed"  # ou "completed"
+            mission.save()
 
 
 # 🔹 Génération du PDF pour une mission
