@@ -1,9 +1,9 @@
 # chat/consumers.py
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from missions.models import Mission
-from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
+from django.contrib.auth import get_user_model
+from missions.models import Mission
 from .models import Message
 
 User = get_user_model()
@@ -12,8 +12,7 @@ User = get_user_model()
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.mission_id = self.scope['url_route']['kwargs']['mission_id']
-
+        self.mission_id = self.scope["url_route"]["kwargs"]["mission_id"]
         self.user = self.scope.get("user")
 
         if not self.user or self.user.is_anonymous:
@@ -26,7 +25,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        # 🔥 ROOM UNIQUE BASÉE SUR MISSION
+        # 🔥 ROOM UNIQUE PAR MISSION (CORRECT)
         self.room_group_name = f"chat_mission_{self.mission_id}"
 
         await self.channel_layer.group_add(
@@ -35,13 +34,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-
-    @database_sync_to_async
-    def get_mission(self, mission_id):
-        try:
-            return Mission.objects.get(id=mission_id)
-        except:
-            return None
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -58,6 +50,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.save_message(self.user.id, self.mission_id, message)
 
+        # 🔥 BROADCAST CORRECT
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -75,25 +68,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "sender_email": event["sender_email"],
         }))
 
-    # 🔐 Vérification accès chat
     @database_sync_to_async
-    def can_access_chat(self, user, mission_id, freelance_id):
+    def get_mission(self, mission_id):
         try:
-            mission = Mission.objects.get(id=mission_id)
-
-            # ✔ Client propriétaire
-            if user == mission.client:
-                return True
-
-            # ✔ Freelance concerné
-            if user.id == int(freelance_id):
-                return True
-
-            return False
+            return Mission.objects.get(id=mission_id)
         except:
-            return False
+            return None
 
-    # 💾 Sauvegarde message
     @database_sync_to_async
     def save_message(self, user_id, mission_id, message):
         try:
@@ -106,6 +87,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 content=message
             )
         except Exception as e:
-            print("Erreur save_message:", e)
+            print("save_message error:", e)
 
 

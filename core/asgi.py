@@ -14,12 +14,14 @@ from core.jwt_middleware import JWTAuthMiddleware
 
 django_asgi_app = get_asgi_application()
 
+from django.urls import path
+from chat.consumers import ChatConsumer
+
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
-
     "websocket": JWTAuthMiddleware(
         URLRouter([
-            path("ws/chat/<int:mission_id>/<int:freelance_id>/", ChatConsumer.as_asgi()),
+            path("ws/chat/<int:mission_id>/", ChatConsumer.as_asgi()),
         ])
     ),
 })
