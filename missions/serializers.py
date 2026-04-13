@@ -12,9 +12,12 @@ class MissionSerializer(serializers.ModelSerializer):
 
 class MissionApplicationSerializer(serializers.ModelSerializer):
     freelancer_email = serializers.ReadOnlyField(source="freelancer.email")
+    freelancer_id = serializers.ReadOnlyField(source="freelancer.id")
+    mission_title = serializers.ReadOnlyField(source="mission.title")
 
     class Meta:
         model = MissionApplication
         fields = "__all__"
         read_only_fields = ("freelancer", "status", "created_at", "mission")
+
 

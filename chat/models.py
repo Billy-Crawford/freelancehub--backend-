@@ -1,3 +1,4 @@
+# chat/models.py
 from django.db import models
 
 from missions.models import Mission

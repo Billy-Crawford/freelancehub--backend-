@@ -1,4 +1,5 @@
 # missions/views.py
+from django.views.defaults import permission_denied
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import get_object_or_404
@@ -121,4 +122,30 @@ class MissionApplicationsListView(generics.ListAPIView):
             raise PermissionDenied("Vous n'êtes pas propriétaire de cette mission.")
         return queryset
 
+# 🔹 Liste des candidatures du freelance connecté
+class MyApplicationsView(generics.ListAPIView):
+    serializer_class = MissionApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not hasattr(self.request.user, 'freelance_profile'):
+            raise PermissionDenied("Seuls les freelances peuvent voir leurs candidatures.")
+
+        return MissionApplication.objects.filter(freelancer=self.request.user).order_by('-created_at')
+
+
+class ClientAcceptedApplicationsView(generics.ListAPIView):
+    serializer_class = MissionApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.role != "client":
+            raise PermissionDenied("Accès réservé aux clients")
+
+        return MissionApplication.objects.filter(
+            mission__client=user,
+            status="accepted"
+        )
 

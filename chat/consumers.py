@@ -1,3 +1,4 @@
+# chat/consumers.py
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from missions.models import Mission
@@ -12,26 +13,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.mission_id = self.scope['url_route']['kwargs']['mission_id']
-        self.freelance_id = self.scope['url_route']['kwargs']['freelance_id']
 
         self.user = self.scope.get("user")
 
-        # ❌ Bloquer si non connecté
         if not self.user or self.user.is_anonymous:
             await self.close()
             return
 
-        # 🔐 Vérifier accès
-        allowed = await self.can_access_chat(
-            self.user, self.mission_id, self.freelance_id
-        )
+        mission = await self.get_mission(self.mission_id)
 
-        if not allowed:
+        if not mission:
             await self.close()
             return
 
-        # 🔥 ROOM UNIQUE
-        self.room_group_name = f"chat_{self.mission_id}_{self.freelance_id}"
+        # 🔥 ROOM UNIQUE BASÉE SUR MISSION
+        self.room_group_name = f"chat_mission_{self.mission_id}"
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -39,6 +35,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+
+    @database_sync_to_async
+    def get_mission(self, mission_id):
+        try:
+            return Mission.objects.get(id=mission_id)
+        except:
+            return None
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -48,28 +51,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message = data.get('message')
+        message = data.get("message")
 
         if not message:
             return
 
-        # ✅ Sauvegarde DB
         await self.save_message(self.user.id, self.mission_id, message)
 
-        # ✅ Broadcast
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
-                'message': message,
-                'sender': self.user.email
+                "type": "chat_message",
+                "message": message,
+                "sender_id": self.user.id,
+                "sender_email": self.user.email,
             }
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
-            'message': event['message'],
-            'sender': event['sender']
+            "message": event["message"],
+            "sender_id": event["sender_id"],
+            "sender_email": event["sender_email"],
         }))
 
     # 🔐 Vérification accès chat

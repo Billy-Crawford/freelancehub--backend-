@@ -1,3 +1,4 @@
+# core/jwt_middleware.py
 from urllib.parse import parse_qs
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
