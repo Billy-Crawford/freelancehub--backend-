@@ -1,9 +1,11 @@
 # missions/views.py
 from django.views.defaults import permission_denied
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Mission, MissionApplication
 from .serializers import MissionSerializer, MissionApplicationSerializer
@@ -150,4 +152,49 @@ class ClientAcceptedApplicationsView(generics.ListAPIView):
             mission__client=user,
             status="accepted"
         )
+
+class DeleteMissionView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsClient]
+
+    def delete(self, request, mission_id):
+        mission = get_object_or_404(Mission, id=mission_id)
+
+        # sécurité : seul le propriétaire peut supprimer
+        if mission.client != request.user:
+            return Response(
+                {"error": "Vous n'êtes pas propriétaire de cette mission"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # option sécurité métier : empêcher suppression si en cours
+        if mission.status == "in_progress":
+            return Response(
+                {"error": "Impossible de supprimer une mission en cours"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        mission.delete()
+
+        return Response({"message": "Mission supprimée"})
+
+class CompletedMissionListView(generics.ListAPIView):
+    serializer_class = MissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # CLIENT : ses missions terminées
+        if user.role == "client":
+            return Mission.objects.filter(client=user, status="completed")
+
+        # FREELANCE : missions auxquelles il a participé ET terminées
+        if hasattr(user, "freelance_profile"):
+            return Mission.objects.filter(
+                applications__freelancer=user,
+                status="completed"
+            ).distinct()
+
+        raise PermissionDenied("Accès non autorisé")
+
 

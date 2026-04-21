@@ -6,7 +6,7 @@ from .views import (
     ApplyMissionView,
     UpdateApplicationStatusView,
     MissionApplicationsListView,  # 🔹 import de la nouvelle view
-    mission_pdf_view, MyApplicationsView, ClientAcceptedApplicationsView,
+    mission_pdf_view, MyApplicationsView, ClientAcceptedApplicationsView, DeleteMissionView, CompletedMissionListView,
 )
 
 urlpatterns = [
@@ -27,6 +27,12 @@ urlpatterns = [
 
     # 🔹 Générer PDF d'une mission
     path("<int:mission_id>/pdf/", mission_pdf_view, name="mission-pdf"),
+
+    # 🔹 Supprimer une mission
+    path("<int:mission_id>/delete/", DeleteMissionView.as_view(), name="delete-mission"),
+
+    # 🔹 regrouper les mission terminees
+    path("completed/", CompletedMissionListView.as_view(), name="completed-missions"),
 ]
 
 
