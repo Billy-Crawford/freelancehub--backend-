@@ -75,7 +75,6 @@ class UpdateApplicationStatusView(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Le client ne peut gérer que ses missions
         return MissionApplication.objects.filter(mission__client=self.request.user)
 
     def perform_update(self, serializer):
@@ -85,17 +84,17 @@ class UpdateApplicationStatusView(generics.UpdateAPIView):
 
         application = serializer.save(status=status)
 
-        # 🔹 Notifier le freelance
+        # 🔔 notifier freelance
         Notification.objects.create(
             user=application.freelancer,
             type="application_status",
             content=f"Votre candidature pour '{application.mission.title}' a été {application.status}."
         )
 
-        # 🔹 Si accepté, fermer la mission
+        # ✅ CORRECTION ICI
         if status == "accepted":
             mission = application.mission
-            mission.status = "closed"  # ou "completed"
+            mission.status = "in_progress"  # ✅ PAS "closed"
             mission.save()
 
 
@@ -114,13 +113,16 @@ class MissionApplicationsListView(generics.ListAPIView):
 
     def get_queryset(self):
         mission_id = self.kwargs.get("mission_id")
-        # Récupérer uniquement les candidatures pour une mission appartenant au client
-        queryset = MissionApplication.objects.filter(mission__id=mission_id)
+
+        mission = get_object_or_404(Mission, id=mission_id)
+
         if self.request.user.role != "client":
             raise PermissionDenied("Seuls les clients peuvent voir les candidatures.")
-        if queryset.exists() and queryset.first().mission.client != self.request.user:
+
+        if mission.client != self.request.user:
             raise PermissionDenied("Vous n'êtes pas propriétaire de cette mission.")
-        return queryset
+
+        return MissionApplication.objects.filter(mission=mission)
 
 # 🔹 Liste des candidatures du freelance connecté
 class MyApplicationsView(generics.ListAPIView):
