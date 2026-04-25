@@ -198,3 +198,18 @@ class CompletedMissionListView(generics.ListAPIView):
         raise PermissionDenied("Accès non autorisé")
 
 
+class MissionCanReviewView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, mission_id):
+        mission = get_object_or_404(Mission, id=mission_id)
+
+        can_review = (
+            mission.status == "completed"
+            and request.user.role == "client"
+            and mission.client == request.user
+        )
+
+        return Response({
+            "can_review": can_review
+        })

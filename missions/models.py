@@ -13,6 +13,7 @@ class Mission(models.Model):
         ('cancelled', 'Annulée'),
     )
 
+
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='missions')
 
     title = models.CharField(max_length=255)

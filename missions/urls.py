@@ -7,6 +7,7 @@ from .views import (
     UpdateApplicationStatusView,
     MissionApplicationsListView,  # 🔹 import de la nouvelle view
     mission_pdf_view, MyApplicationsView, ClientAcceptedApplicationsView, DeleteMissionView, CompletedMissionListView,
+    MissionCanReviewView,
 )
 
 urlpatterns = [
@@ -33,6 +34,9 @@ urlpatterns = [
 
     # 🔹 regrouper les mission terminees
     path("completed/", CompletedMissionListView.as_view(), name="completed-missions"),
+
+    # 🔹 regrouper les mission terminees
+    path("missions/<int:mission_id>/can-review/", MissionCanReviewView.as_view()),
 ]
 
 

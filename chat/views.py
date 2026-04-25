@@ -1,3 +1,4 @@
+# chat/views.py
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,8 +37,27 @@ class ConversationListView(APIView):
 class MessageListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    # def get(self, request, mission_id):
+    #     messages = Message.objects.filter(mission_id=mission_id).order_by("timestamp")
+    #
+    #     data = [
+    #         {
+    #             "id": msg.id,
+    #             "content": msg.content,
+    #             "file": msg.file.url if msg.file else None,
+    #             "sender_id": msg.sender.id,
+    #             "sender_email": msg.sender.email,
+    #             "timestamp": msg.timestamp,
+    #         }
+    #         for msg in messages
+    #     ]
+    #
+    #     return Response(data)
+
     def get(self, request, mission_id):
         messages = Message.objects.filter(mission_id=mission_id).order_by("timestamp")
+
+        mission_title = messages.first().mission.title if messages.exists() else ""
 
         data = [
             {
@@ -51,11 +71,17 @@ class MessageListCreateView(APIView):
             for msg in messages
         ]
 
-        return Response(data)
+        return Response({
+            "mission_id": mission_id,
+            "mission_title": mission_title,  # ✅ AJOUT IMPORTANT
+            "messages": data
+        })
 
     def post(self, request, mission_id):
-        content = request.data.get("message")
+        # content = request.data.get("message")
+        content = request.data.get("message") or request.data.get("content")
         file = request.FILES.get("file")
+
 
         if not content and not file:
             return Response({"error": "Message vide"}, status=400)
